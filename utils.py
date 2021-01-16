@@ -73,6 +73,12 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
+def show_img_from_depth(predicted_depth):
+    predicted_depth_img = (predicted_depth / predicted_depth.max() * 255).astype(int)
+    predicted_depth_img = np.uint8(predicted_depth_img[0,0,:,:])
+    return Image.fromarray(predicted_depth_img)
+
+
 def compute_errors(gt, pred):
     thresh = np.maximum((gt / pred), (pred / gt))
     a1 = (thresh < 1.25).mean()
