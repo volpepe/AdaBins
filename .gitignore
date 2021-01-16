@@ -7,6 +7,7 @@ predictions_kitti/
 wandb/
 checkpoints/
 pretrained/
+.ipynb_checkpoints
 *checkpoint*.ipynb
 test_imgs/*
 output
