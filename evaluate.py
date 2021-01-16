@@ -13,6 +13,8 @@ from dataloader import DepthDataLoader
 from models import UnetAdaptiveBins
 from utils import RunningAverageDict
 
+import time
+
 
 def compute_errors(gt, pred):
     thresh = np.maximum((gt / pred), (pred / gt))
@@ -61,14 +63,17 @@ def predict_tta(model, image, args):
     return torch.Tensor(final)
 
 
-def eval(model, test_loader, args, gpus=None, ):
+def eval(model, test_loader, args, gpus=None, time_s=False):
     if gpus is None:
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     else:
         device = gpus[0]
 
     if args.save_dir is not None:
-        os.makedirs(args.save_dir)
+        os.makedirs(args.save_dir, exist_ok=True)
+
+    if time:
+        times = []
 
     metrics = RunningAverageDict()
     # crop_size = (471 - 45, 601 - 41)
@@ -82,7 +87,13 @@ def eval(model, test_loader, args, gpus=None, ):
 
             image = batch['image'].to(device)
             gt = batch['depth'].to(device)
-            final = predict_tta(model, image, args)
+            if time:
+                start = time.time()
+                final = predict_tta(model, image, args)
+                end = time.time()
+                times.append(end - start)
+            else:
+                final = predict_tta(model, image, args)
             final = final.squeeze().cpu().numpy()
 
             # final[final < args.min_depth] = args.min_depth
@@ -140,6 +151,10 @@ def eval(model, test_loader, args, gpus=None, ):
     metrics = {k: round(v, 3) for k, v in metrics.get_value().items()}
     print(f"Metrics: {metrics}")
 
+    if time:
+        avg_time = np.average(np.asarray(times))
+        print("Average image computation time: {} s".format(avg_time))
+
 
 def convert_arg_line_to_args(arg_line):
     for arg in arg_line.split():
@@ -195,6 +210,7 @@ if __name__ == '__main__':
     parser.add_argument('--eigen_crop', help='if set, crops according to Eigen NIPS14', action='store_true')
     parser.add_argument('--garg_crop', help='if set, crops according to Garg  ECCV16', action='store_true')
     parser.add_argument('--do_kb_crop', help='Use kitti benchmark cropping', action='store_true')
+    parser.add_argument('--time', help="Calculate average image generation time", action="store_true")
 
     if sys.argv.__len__() == 2:
         arg_filename_with_prefix = '@' + sys.argv[1]
@@ -212,4 +228,6 @@ if __name__ == '__main__':
     model = model_io.load_checkpoint(args.checkpoint_path, model)[0]
     model = model.eval()
 
-    eval(model, test, args, gpus=[device])
+    time_s = args.time
+
+    eval(model, test, args, gpus=[device], time_s=time_s)
