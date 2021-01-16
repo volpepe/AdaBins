@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from PIL import Image
+import cv2  # PIL kinda sucks (sorry)
 from torchvision import transforms
 from tqdm import tqdm
 
@@ -129,7 +130,7 @@ class InferenceHelper:
         return centers, final
 
     @torch.no_grad()
-    def predict_dir(self, test_dir, out_dir):
+    def predict_dir(self, test_dir, out_dir, save_img=False):
         os.makedirs(out_dir, exist_ok=True)
         transform = ToTensor()
         all_files = glob.glob(os.path.join(test_dir, "*"))
@@ -143,9 +144,14 @@ class InferenceHelper:
 
             final = (final * self.saving_factor).astype('uint16')
             basename = os.path.basename(f).split('.')[0]
-            save_path = os.path.join(out_dir, basename + ".png")
+            save_path = os.path.join(out_dir, basename)
 
-            Image.fromarray(final).save(save_path)
+            final = final[0,0,:,:]
+            np.save(save_path + '.npy', final)
+            
+            if save_img:
+                final_img = (final / final.max() * 255).astype(int)
+                cv2.imwrite(save_path + '.png', final_img)
 
 
 if __name__ == '__main__':
