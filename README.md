@@ -6,6 +6,19 @@ Official implementation of [Adabins: Depth Estimation using adaptive bins](https
 * You can download the pretrained models "AdaBins_nyu.pt" and "AdaBins_kitti.pt" from [here](https://drive.google.com/drive/folders/1nYyaQXOBjNdUJDsmJpcRpu6oE55aQoLA?usp=sharing)
 * You can download the predicted depths in 16-bit format for NYU-Depth-v2 official test set and KITTI Eigen split test set [here](https://drive.google.com/drive/folders/1b3nfm8lqrvUjtYGmsqA5gptNQ8vPlzzS?usp=sharing)
 
+## Testing
+Modify the arguments text files accordingly (for examples, changing paths for the dataset if different from the default ones). Then:
+
+```python evaluate.py args_test_nyu.txt```
+
+My results on dataset NYU:
+Metrics: 
+| a1  |  a2   |  a3   |abs_rel|  rmse  | log_10 | rmse_log | silog | sq_rel |
+|-----|-------|-------|-------|--------|--------|----------|-------|--------|
+|0.902| 0.983 | 0.997 | 0.103 |  0.364 |  0.044 |   0.131  | 10.573| 0.057  |
+
+Average single image computation time: 0.10120417364511286 s
+
 ## Inference
 Move the downloaded weights to a directory of your choice (we will use "./pretrained/" here). You can then use the pretrained models like so:
 
